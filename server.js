@@ -6,109 +6,48 @@ const path = require('path');
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
-  cors: { 
-    origin: '*', 
+  cors: {
+    origin: '*',
     methods: ['GET', 'POST']
-  },
-  transports: ['websocket', 'polling'],
-  serveClient: true
+  }
 });
 
-const PORT = process.env.PORT || 3000;
-const connections = new Map();
-
-// Middleware
-app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Routes
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-app.get('/test', (req, res) => {
-  res.send('Server is running!');
-});
+const peers = {};
 
-app.get('/api/status', (req, res) => {
-  res.json({ 
-    status: 'ok',
-    server: 'running',
-    connectedPeers: connections.size,
-    timestamp: Date.now()
-  });
-});
-
-// WebSocket Events
 io.on('connection', (socket) => {
-  const peerId = socket.id;
-  connections.set(peerId, { id: peerId, connectedAt: Date.now() });
+  console.log('✅ Connected:', socket.id);
+  peers[socket.id] = socket;
 
-  console.log(`✅ [CONNECT] Peer ${peerId} connected (Total: ${connections.size})`);
+  // Tell client their ID
+  socket.emit('your-id', socket.id);
 
-  // Send connection confirmation
-  socket.emit('connection-success', {
-    peerId: peerId,
-    message: 'Connected to server'
-  });
+  // Tell all clients about this new connection
+  io.emit('peers-update', Object.keys(peers));
 
-  // Broadcast new connection to all
-  io.emit('peer-connected', {
-    peerId: peerId,
-    totalPeers: connections.size
-  });
-
-  // Handle direct messages
-  socket.on('send-message', (data) => {
-    console.log(`💬 [MESSAGE] From: ${data.from}, To: ${data.to}`);
-    if (connections.has(data.to)) {
-      io.to(data.to).emit('receive-message', {
-        from: data.from,
-        content: data.content,
-        timestamp: data.timestamp || Date.now()
+  socket.on('message', (msg) => {
+    console.log('Message:', msg);
+    if (peers[msg.to]) {
+      peers[msg.to].emit('message', {
+        from: socket.id,
+        text: msg.text
       });
-    } else {
-      socket.emit('error', { message: 'Peer not found' });
     }
   });
 
   socket.on('disconnect', () => {
-    connections.delete(peerId);
-    console.log(`❌ [DISCONNECT] Peer ${peerId} disconnected (Total: ${connections.size})`);
-    io.emit('peer-disconnected', {
-      peerId: peerId,
-      totalPeers: connections.size
-    });
-  });
-
-  socket.on('error', (error) => {
-    console.error(`❌ [ERROR] ${error}`);
+    console.log('❌ Disconnected:', socket.id);
+    delete peers[socket.id];
+    io.emit('peers-update', Object.keys(peers));
   });
 });
 
-// Error handling
-server.on('error', (err) => {
-  console.error('Server error:', err);
-});
-
-// Start server
+const PORT = 3000;
 server.listen(PORT, () => {
-  console.log('\n' + '='.repeat(60));
-  console.log('🌐 P2P Chat System - Server Started');
-  console.log('='.repeat(60));
-  console.log(`✅ HTTP:  http://localhost:${PORT}`);
-  console.log(`📡 WS:    ws://localhost:${PORT}`);
-  console.log(`🔧 Test:  http://localhost:${PORT}/test`);
-  console.log(`📊 Status: http://localhost:${PORT}/api/status`);
-  console.log('='.repeat(60) + '\n');
+  console.log(`Server running on http://localhost:${PORT}`);
 });
-
-process.on('SIGTERM', () => {
-  console.log('\n⚠️  Shutting down gracefully...');
-  server.close(() => {
-    console.log('✅ Server closed');
-    process.exit(0);
-  });
-});
-
-module.exports = server;
