@@ -10,7 +10,8 @@ const io = socketIo(server, {
     origin: '*', 
     methods: ['GET', 'POST']
   },
-  transports: ['websocket', 'polling']
+  transports: ['websocket', 'polling'],
+  serveClient: true
 });
 
 const PORT = process.env.PORT || 3000;
@@ -25,67 +26,89 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+app.get('/test', (req, res) => {
+  res.send('Server is running!');
+});
+
 app.get('/api/status', (req, res) => {
   res.json({ 
     status: 'ok',
+    server: 'running',
     connectedPeers: connections.size,
     timestamp: Date.now()
   });
 });
 
-// WebSocket
+// WebSocket Events
 io.on('connection', (socket) => {
   const peerId = socket.id;
   connections.set(peerId, { id: peerId, connectedAt: Date.now() });
 
-  console.log(`✅ Peer connected: ${peerId} (Total: ${connections.size})`);
+  console.log(`✅ [CONNECT] Peer ${peerId} connected (Total: ${connections.size})`);
 
-  // Broadcast to all clients
+  // Send connection confirmation
+  socket.emit('connection-success', {
+    peerId: peerId,
+    message: 'Connected to server'
+  });
+
+  // Broadcast new connection to all
   io.emit('peer-connected', {
     peerId: peerId,
     totalPeers: connections.size
   });
 
-  // Direct messaging
+  // Handle direct messages
   socket.on('send-message', (data) => {
+    console.log(`💬 [MESSAGE] From: ${data.from}, To: ${data.to}`);
     if (connections.has(data.to)) {
       io.to(data.to).emit('receive-message', {
         from: data.from,
         content: data.content,
         timestamp: data.timestamp || Date.now()
       });
-      console.log(`💬 Message: ${data.from} → ${data.to}`);
+    } else {
+      socket.emit('error', { message: 'Peer not found' });
     }
   });
 
   socket.on('disconnect', () => {
     connections.delete(peerId);
-    console.log(`❌ Peer disconnected: ${peerId} (Total: ${connections.size})`);
+    console.log(`❌ [DISCONNECT] Peer ${peerId} disconnected (Total: ${connections.size})`);
     io.emit('peer-disconnected', {
       peerId: peerId,
       totalPeers: connections.size
     });
   });
 
-  socket.on('error', (err) => {
-    console.error(`Socket error: ${err}`);
+  socket.on('error', (error) => {
+    console.error(`❌ [ERROR] ${error}`);
   });
+});
+
+// Error handling
+server.on('error', (err) => {
+  console.error('Server error:', err);
 });
 
 // Start server
 server.listen(PORT, () => {
-  console.log('\n' + '='.repeat(50));
-  console.log('🌐 P2P Chat System Running');
-  console.log('='.repeat(50));
-  console.log(`✅ http://localhost:${PORT}`);
-  console.log(`📡 WS: ws://localhost:${PORT}`);
-  console.log('='.repeat(50) + '\n');
+  console.log('\n' + '='.repeat(60));
+  console.log('🌐 P2P Chat System - Server Started');
+  console.log('='.repeat(60));
+  console.log(`✅ HTTP:  http://localhost:${PORT}`);
+  console.log(`📡 WS:    ws://localhost:${PORT}`);
+  console.log(`🔧 Test:  http://localhost:${PORT}/test`);
+  console.log(`📊 Status: http://localhost:${PORT}/api/status`);
+  console.log('='.repeat(60) + '\n');
 });
 
 process.on('SIGTERM', () => {
-  console.log('Shutting down...');
-  server.close();
-  process.exit(0);
+  console.log('\n⚠️  Shutting down gracefully...');
+  server.close(() => {
+    console.log('✅ Server closed');
+    process.exit(0);
+  });
 });
 
 module.exports = server;
