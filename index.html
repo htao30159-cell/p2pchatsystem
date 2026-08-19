@@ -35,7 +35,6 @@
             overflow: hidden;
         }
 
-        /* Sidebar */
         .sidebar {
             width: 320px;
             background: rgba(255, 255, 255, 0.95);
@@ -66,6 +65,31 @@
             font-family: 'Courier New', monospace;
         }
 
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+            font-size: 12px;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #ef4444;
+        }
+
+        .status-dot.connected {
+            background: #4ade80;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
         .peer-controls {
             padding: 20px;
             display: flex;
@@ -85,7 +109,6 @@
             border: 1px solid #ddd;
             border-radius: 10px;
             font-size: 13px;
-            transition: all 0.3s ease;
         }
 
         .control-group input:focus {
@@ -111,11 +134,6 @@
             box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
         }
 
-        .control-group button:active {
-            transform: translateY(0);
-        }
-
-        /* Peers List */
         .peers-section {
             flex: 1;
             display: flex;
@@ -161,24 +179,13 @@
         .peer-item.active {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            border-color: rgba(255, 255, 255, 0.3);
         }
 
         .peer-status {
             width: 10px;
             height: 10px;
             border-radius: 50%;
-            background: #ccc;
-        }
-
-        .peer-item.active .peer-status {
             background: #4ade80;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
         }
 
         .peer-name {
@@ -188,7 +195,6 @@
             word-break: break-all;
         }
 
-        /* Main Chat Area */
         .chat-container {
             flex: 1;
             display: flex;
@@ -203,7 +209,6 @@
             padding: 25px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
             display: flex;
             align-items: center;
             gap: 12px;
@@ -231,7 +236,6 @@
             opacity: 0.8;
         }
 
-        /* Messages */
         .messages-container {
             flex: 1;
             overflow-y: auto;
@@ -274,13 +278,11 @@
         .message.own .message-bubble {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            border-bottom-right-radius: 4px;
         }
 
         .message.other .message-bubble {
             background: #e5e7eb;
             color: #1f2937;
-            border-bottom-left-radius: 4px;
         }
 
         .message-time {
@@ -306,7 +308,6 @@
             opacity: 0.5;
         }
 
-        /* Input Area */
         .input-container {
             padding: 25px;
             border-top: 1px solid rgba(0, 0, 0, 0.05);
@@ -316,22 +317,13 @@
             align-items: flex-end;
         }
 
-        .input-wrapper {
-            flex: 1;
-            display: flex;
-            gap: 12px;
-        }
-
         .message-input {
             flex: 1;
             padding: 12px 16px;
             border: 1px solid #ddd;
             border-radius: 12px;
             font-size: 14px;
-            resize: none;
-            max-height: 100px;
             font-family: inherit;
-            transition: all 0.3s ease;
         }
 
         .message-input:focus {
@@ -347,12 +339,8 @@
             border: none;
             border-radius: 12px;
             cursor: pointer;
-            font-size: 14px;
             font-weight: 600;
             transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 6px;
         }
 
         .send-btn:hover {
@@ -360,73 +348,24 @@
             box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
         }
 
-        .send-btn:active {
-            transform: translateY(0);
-        }
-
         .send-btn:disabled {
             opacity: 0.5;
             cursor: not-allowed;
-            transform: none;
         }
 
-        /* Scrollbar */
-        ::-webkit-scrollbar {
-            width: 6px;
+        .hidden {
+            display: none !important;
         }
 
-        ::-webkit-scrollbar-track {
-            background: rgba(0, 0, 0, 0.05);
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: rgba(102, 126, 234, 0.3);
-            border-radius: 3px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: rgba(102, 126, 234, 0.5);
-        }
-
-        /* Status indicators */
-        .status {
-            font-size: 12px;
-            padding: 8px 12px;
-            border-radius: 8px;
-            margin: 10px 20px 0;
-            text-align: center;
-        }
-
-        .status.connecting {
-            background: #fef3c7;
-            color: #92400e;
-        }
-
-        .status.connected {
-            background: #dcfce7;
-            color: #15803d;
-        }
-
-        .status.error {
-            background: #fee2e2;
-            color: #b91c1c;
-        }
-
-        /* Responsive */
         @media (max-width: 768px) {
             .container {
                 flex-direction: column;
                 height: auto;
-                min-height: 100vh;
             }
 
             .sidebar {
                 width: 100%;
                 max-height: 300px;
-            }
-
-            .chat-container {
-                flex: 1;
             }
 
             .message-bubble {
@@ -437,42 +376,37 @@
 </head>
 <body>
     <div class="container">
-        <!-- Sidebar -->
         <div class="sidebar">
             <div class="sidebar-header">
                 <h1>💬 P2P Chat</h1>
-                <div class="peer-id" id="peerId">Loading...</div>
+                <div class="peer-id" id="peerId">Connecting...</div>
+                <div class="status-indicator">
+                    <div class="status-dot" id="statusDot"></div>
+                    <span id="statusText">Connecting...</span>
+                </div>
             </div>
 
             <div class="peer-controls">
                 <div class="control-group">
-                    <input type="text" id="peerConnectInput" placeholder="Peer address (host:port)" />
-                </div>
-                <div class="control-group">
-                    <button onclick="connectToPeer()">Connect</button>
-                    <button onclick="discoverPeers()">Discover</button>
+                    <input type="text" id="peerInput" placeholder="Peer ID to connect" />
+                    <button onclick="connectPeer()">Connect</button>
                 </div>
             </div>
 
-            <div class="status" id="status">Initializing...</div>
-
             <div class="peers-section">
-                <div class="peers-header">Online Peers</div>
+                <div class="peers-header">Online Peers (<span id="peerCount">0</span>)</div>
                 <div class="peers-list" id="peersList">
-                    <div style="color: #999; text-align: center; padding: 20px; font-size: 13px;">
-                        No peers connected yet
-                    </div>
+                    <div style="color: #999; text-align: center; padding: 20px;">No peers yet</div>
                 </div>
             </div>
         </div>
 
-        <!-- Chat Area -->
         <div class="chat-container">
             <div class="chat-header">
                 <div class="chat-header-dot"></div>
                 <div class="chat-header-info">
-                    <div class="chat-header-title" id="chatTitle">Welcome to P2P Chat</div>
-                    <div class="chat-header-subtitle" id="chatSubtitle">Select a peer to start chatting</div>
+                    <div class="chat-header-title" id="chatTitle">Welcome</div>
+                    <div class="chat-header-subtitle" id="chatSubtitle">Select a peer to chat</div>
                 </div>
             </div>
 
@@ -483,283 +417,182 @@
                 </div>
             </div>
 
-            <div class="input-container" id="inputContainer" style="display: none;">
-                <div class="input-wrapper">
-                    <textarea class="message-input" id="messageInput" placeholder="Type your message..." rows="1"></textarea>
-                    <button class="send-btn" onclick="sendMessage()">
-                        <span>Send</span>
-                        <span>→</span>
-                    </button>
-                </div>
+            <div class="input-container hidden" id="inputContainer">
+                <input type="text" id="messageInput" class="message-input" placeholder="Type a message..." />
+                <button class="send-btn" onclick="sendMessage()">Send</button>
             </div>
         </div>
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        // P2P Chat Client
         class P2PChat {
             constructor() {
-                this.socket = io();
-                this.peerId = this.generateId();
-                this.connectedPeers = new Map();
+                this.peerId = null;
                 this.currentChat = null;
+                this.peers = new Map();
                 this.messages = new Map();
-                
-                this.setupSocketListeners();
-                this.setupUIListeners();
-                this.updatePeerId();
-                this.loadConnectionInfo();
+                this.socket = null;
+                this.init();
             }
 
-            generateId() {
-                return 'peer-' + Math.random().toString(36).substr(2, 9);
+            init() {
+                try {
+                    this.socket = io();
+                    this.setupSocketHandlers();
+                } catch (err) {
+                    console.error('Failed to initialize socket:', err);
+                    this.setStatus('Connection Failed', false);
+                }
             }
 
-            setupSocketListeners() {
+            setupSocketHandlers() {
                 this.socket.on('connect', () => {
-                    console.log('Connected to signaling server');
-                    this.updateStatus('Connected', 'connected');
+                    this.peerId = this.socket.id;
+                    console.log('✅ Connected:', this.peerId);
+                    document.getElementById('peerId').textContent = this.peerId;
+                    this.setStatus('Connected', true);
                 });
 
                 this.socket.on('disconnect', () => {
-                    console.log('Disconnected from signaling server');
-                    this.updateStatus('Disconnected', 'error');
+                    console.log('❌ Disconnected');
+                    this.setStatus('Disconnected', false);
                 });
 
-                this.socket.on('peer-joined', (data) => {
-                    console.log('Peer joined:', data.peerId);
-                    this.addPeer(data.peerId, data.socketId);
-                    this.showNotification(`${data.peerId} joined`);
-                });
-
-                this.socket.on('peer-left', (data) => {
-                    console.log('Peer left');
-                    this.removePeer(data.socketId);
-                });
-
-                this.socket.on('message', (data) => {
-                    console.log('Message received:', data);
-                    this.handleIncomingMessage(data);
-                });
-
-                this.socket.on('room-message', (data) => {
-                    this.handleIncomingMessage(data);
-                });
-
-                this.socket.on('signal', (data) => {
-                    console.log('Signal received from:', data.from);
-                });
-            }
-
-            setupUIListeners() {
-                document.getElementById('messageInput').addEventListener('keypress', (e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        this.sendMessage();
+                this.socket.on('peer-connected', (data) => {
+                    if (data.peerId !== this.peerId) {
+                        this.addPeer(data.peerId);
+                        console.log('👤 Peer joined:', data.peerId);
                     }
+                    this.updatePeerCount(data.totalPeers);
                 });
 
-                // Auto-resize textarea
-                const textarea = document.getElementById('messageInput');
-                textarea.addEventListener('input', function() {
-                    this.style.height = 'auto';
-                    this.style.height = Math.min(this.scrollHeight, 100) + 'px';
+                this.socket.on('peer-disconnected', (data) => {
+                    this.removePeer(data.peerId);
+                    this.updatePeerCount(data.totalPeers);
+                });
+
+                this.socket.on('receive-message', (data) => {
+                    this.handleMessage(data);
+                });
+
+                this.socket.on('error', (err) => {
+                    console.error('Socket error:', err);
+                });
+
+                this.socket.on('connect_error', (err) => {
+                    console.error('Connection error:', err);
+                    this.setStatus('Connection Error', false);
                 });
             }
 
-            updatePeerId() {
-                const peerIdEl = document.getElementById('peerId');
-                peerIdEl.textContent = this.peerId;
-                peerIdEl.title = 'Your Peer ID';
-            }
-
-            updateStatus(message, type) {
-                const statusEl = document.getElementById('status');
-                statusEl.textContent = message;
-                statusEl.className = `status ${type}`;
-            }
-
-            loadConnectionInfo() {
-                const saved = localStorage.getItem('p2p-connection-info');
-                if (saved) {
-                    const info = JSON.parse(saved);
-                    document.getElementById('peerConnectInput').value = info.address || '';
+            setStatus(text, connected) {
+                document.getElementById('statusText').textContent = text;
+                const dot = document.getElementById('statusDot');
+                if (connected) {
+                    dot.classList.add('connected');
+                } else {
+                    dot.classList.remove('connected');
                 }
             }
 
-            saveConnectionInfo() {
-                const address = document.getElementById('peerConnectInput').value;
-                localStorage.setItem('p2p-connection-info', JSON.stringify({ address }));
-            }
-
-            connectToPeer() {
-                const input = document.getElementById('peerConnectInput').value.trim();
-                if (!input) {
-                    this.showNotification('Enter peer address', 'error');
-                    return;
+            addPeer(peerId) {
+                if (!this.peers.has(peerId)) {
+                    this.peers.set(peerId, {});
+                    this.messages.set(peerId, []);
+                    this.renderPeers();
                 }
+            }
 
-                this.saveConnectionInfo();
-                const [host, port] = input.split(':');
-                
-                if (!port) {
-                    this.showNotification('Format: host:port', 'error');
-                    return;
+            removePeer(peerId) {
+                this.peers.delete(peerId);
+                if (this.currentChat === peerId) {
+                    this.currentChat = null;
+                    this.showEmptyState();
                 }
-
-                this.updateStatus('Connecting...', 'connecting');
-                const peerId = `${host}:${port}`;
-                this.addPeer(peerId, 'tcp-' + Math.random().toString(36).substr(2, 9));
-                
-                setTimeout(() => {
-                    this.updateStatus('Connected', 'connected');
-                    this.showNotification('Connected to peer');
-                }, 500);
+                this.renderPeers();
             }
 
-            discoverPeers() {
-                this.updateStatus('Discovering peers...', 'connecting');
-                
-                // Simulate peer discovery
-                fetch('/api/peers')
-                    .then(r => r.json())
-                    .then(data => {
-                        if (data.peers.length === 0) {
-                            this.showNotification('No peers found');
-                        } else {
-                            data.peers.forEach(peer => {
-                                this.addPeer(peer.id, peer.id);
-                            });
-                            this.showNotification(`Found ${data.peers.length} peers`);
-                        }
-                        this.updateStatus('Connected', 'connected');
-                    })
-                    .catch(err => {
-                        console.error('Discovery error:', err);
-                        this.updateStatus('Discovery failed', 'error');
-                    });
+            updatePeerCount(count) {
+                document.getElementById('peerCount').textContent = count - 1; // Exclude self
             }
 
-            addPeer(peerId, socketId) {
-                if (this.connectedPeers.has(peerId)) return;
-                
-                this.connectedPeers.set(peerId, { id: peerId, socketId });
-                this.messages.set(peerId, []);
-                this.renderPeersList();
-            }
-
-            removePeer(socketId) {
-                for (const [peerId, peer] of this.connectedPeers) {
-                    if (peer.socketId === socketId) {
-                        this.connectedPeers.delete(peerId);
-                        if (this.currentChat === peerId) {
-                            this.currentChat = null;
-                            this.showEmptyState();
-                        }
-                        break;
-                    }
-                }
-                this.renderPeersList();
-            }
-
-            renderPeersList() {
+            renderPeers() {
                 const list = document.getElementById('peersList');
-                
-                if (this.connectedPeers.size === 0) {
-                    list.innerHTML = '<div style="color: #999; text-align: center; padding: 20px; font-size: 13px;">No peers connected yet</div>';
+                const peers = Array.from(this.peers.keys()).filter(id => id !== this.peerId);
+
+                if (peers.length === 0) {
+                    list.innerHTML = '<div style="color: #999; text-align: center; padding: 20px;">No other peers</div>';
                     return;
                 }
 
-                list.innerHTML = Array.from(this.connectedPeers.values()).map(peer => `
-                    <div class="peer-item ${this.currentChat === peer.id ? 'active' : ''}" onclick="chat.selectPeer('${peer.id}')">
+                list.innerHTML = peers.map(peerId => `
+                    <div class="peer-item ${this.currentChat === peerId ? 'active' : ''}" onclick="chat.selectPeer('${peerId}')">
                         <div class="peer-status"></div>
-                        <div class="peer-name">${peer.id}</div>
+                        <div class="peer-name">${peerId.substring(0, 12)}...</div>
                     </div>
                 `).join('');
             }
 
             selectPeer(peerId) {
                 this.currentChat = peerId;
-                this.renderPeersList();
+                this.renderPeers();
                 this.renderMessages();
-                this.updateChatHeader();
-                
-                const inputContainer = document.getElementById('inputContainer');
-                inputContainer.style.display = 'flex';
-                
+                document.getElementById('chatTitle').textContent = peerId.substring(0, 12);
+                document.getElementById('chatSubtitle').textContent = 'Connected';
+                document.getElementById('inputContainer').classList.remove('hidden');
                 document.getElementById('messageInput').focus();
             }
 
-            updateChatHeader() {
-                const title = document.getElementById('chatTitle');
-                const subtitle = document.getElementById('chatSubtitle');
-                
-                title.textContent = this.currentChat || 'P2P Chat';
-                subtitle.textContent = 'Connected and ready';
-            }
-
             sendMessage() {
-                if (!this.currentChat) {
-                    this.showNotification('Select a peer first', 'error');
-                    return;
-                }
+                if (!this.currentChat) return;
 
                 const input = document.getElementById('messageInput');
                 const content = input.value.trim();
-                
+
                 if (!content) return;
 
                 const message = {
                     from: this.peerId,
-                    to: this.currentChat,
                     content,
                     timestamp: Date.now(),
                     own: true
                 };
 
-                // Add to messages
-                if (!this.messages.has(this.currentChat)) {
-                    this.messages.set(this.currentChat, []);
-                }
                 this.messages.get(this.currentChat).push(message);
-
-                // Send to peer
-                this.socket.emit('message', {
-                    to: this.connectedPeers.get(this.currentChat).socketId,
+                this.socket.emit('send-message', {
+                    to: this.currentChat,
                     from: this.peerId,
-                    content
+                    content,
+                    timestamp: Date.now()
                 });
 
                 this.renderMessages();
                 input.value = '';
-                input.style.height = 'auto';
             }
 
-            handleIncomingMessage(data) {
-                const from = data.from || data.peerId;
-                
+            handleMessage(data) {
+                const from = data.from;
                 if (!this.messages.has(from)) {
-                    this.messages.set(from, []);
+                    this.addPeer(from);
                 }
 
                 this.messages.get(from).push({
                     from,
                     content: data.content,
-                    timestamp: data.timestamp || Date.now(),
+                    timestamp: data.timestamp,
                     own: false
                 });
 
                 if (this.currentChat === from) {
                     this.renderMessages();
                 }
-
-                this.showNotification(`Message from ${from}`);
+                this.renderPeers();
             }
 
             renderMessages() {
                 const container = document.getElementById('messagesContainer');
-                
+
                 if (!this.currentChat) {
                     this.showEmptyState();
                     return;
@@ -768,12 +601,7 @@
                 const messages = this.messages.get(this.currentChat) || [];
 
                 if (messages.length === 0) {
-                    container.innerHTML = `
-                        <div class="empty-state">
-                            <div class="empty-state-icon">💬</div>
-                            <div>No messages yet. Start the conversation!</div>
-                        </div>
-                    `;
+                    container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">💬</div>Start chatting!</div>';
                     return;
                 }
 
@@ -781,27 +609,16 @@
                     <div class="message ${msg.own ? 'own' : 'other'}">
                         <div>
                             <div class="message-bubble">${this.escapeHtml(msg.content)}</div>
-                            <div class="message-time">${this.formatTime(msg.timestamp)}</div>
+                            <div class="message-time">${new Date(msg.timestamp).toLocaleTimeString()}</div>
                         </div>
                     </div>
                 `).join('');
 
-                // Scroll to bottom
                 container.scrollTop = container.scrollHeight;
             }
 
             showEmptyState() {
-                document.getElementById('messagesContainer').innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-state-icon">👋</div>
-                        <div>Select a peer to start chatting</div>
-                    </div>
-                `;
-            }
-
-            showNotification(message, type = 'info') {
-                console.log(`[${type.toUpperCase()}]`, message);
-                // Could add toast notification here
+                document.getElementById('messagesContainer').innerHTML = '<div class=\"empty-state\"><div class=\"empty-state-icon\">👋</div>Select a peer</div>';
             }
 
             escapeHtml(text) {
@@ -810,33 +627,32 @@
                 return div.innerHTML;
             }
 
-            formatTime(timestamp) {
-                const date = new Date(timestamp);
-                return date.toLocaleTimeString('en-US', { 
-                    hour: '2-digit', 
-                    minute: '2-digit',
-                    hour12: true 
-                });
+            connectPeer() {
+                const peerId = document.getElementById('peerInput').value.trim();
+                if (peerId) {
+                    this.selectPeer(peerId);
+                    document.getElementById('peerInput').value = '';
+                }
             }
         }
 
-        // Initialize
         let chat;
         document.addEventListener('DOMContentLoaded', () => {
             chat = new P2PChat();
+            document.getElementById('messageInput').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    chat.sendMessage();
+                }
+            });
         });
-
-        // Global functions for onclick handlers
-        function connectToPeer() {
-            chat.connectToPeer();
-        }
-
-        function discoverPeers() {
-            chat.discoverPeers();
-        }
 
         function sendMessage() {
             chat.sendMessage();
+        }
+
+        function connectPeer() {
+            chat.connectPeer();
         }
     </script>
 </body>
