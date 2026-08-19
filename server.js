@@ -1,194 +1,117 @@
 const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
-const { v4: uuidv4 } = require('uuid');
 const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
-  cors: { origin: '*', methods: ['GET', 'POST'] }
+  cors: { 
+    origin: '*', 
+    methods: ['GET', 'POST'],
+    transports: ['websocket', 'polling']
+  }
 });
 
 const PORT = process.env.PORT || 3000;
 
-// Store active peers and their connection info
-const peers = new Map();
-const rooms = new Map();
+// Store active connections
+const connections = new Map();
 
+// Middleware
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Serve index.html
+// Routes
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// REST API for peer discovery
-app.get('/api/peers', (req, res) => {
-  const peerList = Array.from(peers.values()).map(peer => ({
-    id: peer.id,
-    address: peer.address,
-    port: peer.port,
-    publicKey: peer.publicKey,
-    timestamp: peer.timestamp
-  }));
-  res.json({ peers: peerList, count: peerList.length });
-});
-
-app.post('/api/register', (req, res) => {
-  const { address, port, publicKey } = req.body;
-  
-  if (!address || !port) {
-    return res.status(400).json({ error: 'Missing address or port' });
-  }
-
-  const peerId = uuidv4();
-  const peerInfo = {
-    id: peerId,
-    address,
-    port,
-    publicKey: publicKey || null,
-    timestamp: Date.now(),
-    clientIp: req.ip
-  };
-
-  peers.set(peerId, peerInfo);
-
-  // Auto-cleanup after 5 minutes of inactivity
-  setTimeout(() => {
-    if (peers.has(peerId)) {
-      peers.delete(peerId);
-      console.log(`Peer ${peerId} expired`);
-    }
-  }, 300000);
-
-  console.log(`✅ Peer registered: ${peerId} at ${address}:${port}`);
+app.get('/api/status', (req, res) => {
   res.json({ 
-    id: peerId, 
-    message: 'Peer registered successfully',
-    peers: Array.from(peers.values()).map(p => ({
-      id: p.id,
-      address: p.address,
-      port: p.port
-    }))
+    status: 'ok',
+    connectedPeers: connections.size,
+    timestamp: Date.now()
   });
 });
 
-app.post('/api/unregister', (req, res) => {
-  const { peerId } = req.body;
-  
-  if (!peerId) {
-    return res.status(400).json({ error: 'Missing peerId' });
-  }
-
-  if (peers.has(peerId)) {
-    peers.delete(peerId);
-    console.log(`✅ Peer unregistered: ${peerId}`);
-    res.json({ message: 'Peer unregistered successfully' });
-  } else {
-    res.status(404).json({ error: 'Peer not found' });
-  }
-});
-
-// WebSocket for real-time signaling and messaging
+// WebSocket connection handling
 io.on('connection', (socket) => {
-  console.log(`🔗 Client connected: ${socket.id}`);
+  const peerId = socket.id;
+  connections.set(peerId, {
+    id: peerId,
+    connectedAt: Date.now(),
+    socket: socket
+  });
 
-  // Join a room for group messaging
-  socket.on('join-room', (roomId, peerId, callback) => {
-    socket.join(roomId);
-    
-    if (!rooms.has(roomId)) {
-      rooms.set(roomId, []);
-    }
-    
-    const roomPeers = rooms.get(roomId);
-    roomPeers.push({ peerId, socketId: socket.id });
-    rooms.set(roomId, roomPeers);
+  console.log(`✅ Peer connected: ${peerId}`);
+  console.log(`📊 Total connected: ${connections.size}`);
 
-    console.log(`👤 Peer ${peerId} joined room ${roomId}`);
-    
-    // Notify others in the room
-    socket.to(roomId).emit('peer-joined', {
-      peerId,
-      socketId: socket.id,
-      roomPeers: roomPeers.map(p => p.peerId)
-    });
+  // Notify all clients of new connection
+  io.emit('peer-connected', {
+    peerId: peerId,
+    totalPeers: connections.size
+  });
 
-    if (callback) {
-      callback({
-        success: true,
-        roomPeers: roomPeers.map(p => p.peerId)
+  // Handle direct messages
+  socket.on('send-message', (data) => {
+    const { to, from, content, timestamp } = data;
+    
+    if (connections.has(to)) {
+      io.to(to).emit('receive-message', {
+        from,
+        content,
+        timestamp: timestamp || Date.now()
       });
+      console.log(`💬 Message: ${from} → ${to}`);
+    } else {
+      socket.emit('error', { message: 'Peer not found' });
     }
   });
 
-  // Signal exchange for WebRTC connections
-  socket.on('signal', (data) => {
-    const { to, signal } = data;
-    io.to(to).emit('signal', {
-      from: socket.id,
-      signal
+  // Handle broadcast messages
+  socket.on('broadcast-message', (data) => {
+    socket.broadcast.emit('receive-message', {
+      from: data.from,
+      content: data.content,
+      timestamp: data.timestamp || Date.now()
     });
+    console.log(`📢 Broadcast from ${data.from}`);
   });
 
-  // Direct peer-to-peer messaging
-  socket.on('message', (data) => {
-    const { to, from, content } = data;
-    io.to(to).emit('message', {
-      from,
-      content,
-      timestamp: Date.now()
-    });
-    console.log(`💬 Message from ${from} to ${to.substring(0, 8)}...`);
-  });
-
-  // Broadcast to room
-  socket.on('room-message', (data) => {
-    const { roomId, peerId, content } = data;
-    socket.to(roomId).emit('room-message', {
-      peerId,
-      content,
-      timestamp: Date.now()
-    });
-    console.log(`📢 Room message from ${peerId} in ${roomId}`);
-  });
-
-  // Heartbeat to keep peer alive
-  socket.on('heartbeat', (peerId) => {
-    if (peers.has(peerId)) {
-      const peerInfo = peers.get(peerId);
-      peerInfo.timestamp = Date.now();
-      peers.set(peerId, peerInfo);
-    }
-  });
-
+  // Handle disconnect
   socket.on('disconnect', () => {
-    console.log(`❌ Client disconnected: ${socket.id}`);
+    connections.delete(peerId);
+    console.log(`❌ Peer disconnected: ${peerId}`);
+    console.log(`📊 Total connected: ${connections.size}`);
     
-    // Remove from rooms
-    for (const [roomId, roomPeers] of rooms.entries()) {
-      const filtered = roomPeers.filter(p => p.socketId !== socket.id);
-      if (filtered.length === 0) {
-        rooms.delete(roomId);
-        console.log(`🚪 Room deleted: ${roomId}`);
-      } else {
-        rooms.set(roomId, filtered);
-        socket.to(roomId).emit('peer-left', { socketId: socket.id });
-      }
-    }
+    io.emit('peer-disconnected', {
+      peerId: peerId,
+      totalPeers: connections.size
+    });
+  });
+
+  // Handle errors
+  socket.on('error', (error) => {
+    console.error(`❌ Socket error from ${peerId}:`, error);
   });
 });
 
+// Start server
 server.listen(PORT, () => {
-  console.log('\n' + '='.repeat(50));
-  console.log('🌐 P2P Chat System - Signaling Server');
-  console.log('='.repeat(50));
-  console.log(`✅ Server running on http://localhost:${PORT}`);
+  console.log('\n' + '='.repeat(60));
+  console.log('🌐 P2P Chat System - Server Running');
+  console.log('='.repeat(60));
+  console.log(`✅ Access at: http://localhost:${PORT}`);
   console.log(`📡 WebSocket: ws://localhost:${PORT}`);
-  console.log(`📋 API: http://localhost:${PORT}/api/peers`);
-  console.log('='.repeat(50) + '\n');
+  console.log(`📊 API Status: http://localhost:${PORT}/api/status`);
+  console.log('='.repeat(60) + '\n');
 });
 
-module.exports = app;
+// Handle server errors
+server.on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {\n    console.error(`❌ Port ${PORT} is already in use!`);\n    console.error('Try a different port: PORT=4000 npm start');\n  } else {\n    console.error('Server error:', err);\n  }\n  process.exit(1);\n});
+
+process.on('SIGTERM', () => {\n  console.log('🛑 Server shutting down...');\n  server.close(() => {\n    console.log('✅ Server closed');\n    process.exit(0);\n  });\n});
+
+module.exports = server;
