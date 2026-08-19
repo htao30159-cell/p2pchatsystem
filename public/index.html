@@ -341,20 +341,22 @@
         </div>
     </div>
 
-    <script src="/socket.io/socket.io.js"></script>
     <script>
+        // Initialize socket.io with proper configuration
+        const socket = io({
+            reconnection: true,
+            reconnectionDelay: 1000,
+            reconnectionDelayMax: 5000,
+            reconnectionAttempts: 5
+        });
+
         class P2PChat {
             constructor() {
-                this.socket = null;
+                this.socket = socket;
                 this.peerId = null;
                 this.peers = new Map();
                 this.messages = new Map();
                 this.currentChat = null;
-                this.init();
-            }
-
-            init() {
-                this.socket = io();
                 this.setupListeners();
             }
 
@@ -363,17 +365,22 @@
                     this.peerId = this.socket.id;
                     document.getElementById('peerId').textContent = this.peerId;
                     this.setStatus('Connected', true);
-                    console.log('Connected:', this.peerId);
+                    console.log('✅ Connected:', this.peerId);
+                });
+
+                this.socket.on('connection-success', (data) => {
+                    console.log('✅ Connection confirmed:', data);
+                    this.setStatus('Connected', true);
                 });
 
                 this.socket.on('disconnect', () => {
                     this.setStatus('Disconnected', false);
-                    console.log('Disconnected');
+                    console.log('❌ Disconnected');
                 });
 
                 this.socket.on('connect_error', (err) => {
                     this.setStatus('Connection Error', false);
-                    console.error('Connection error:', err);
+                    console.error('❌ Connection error:', err);
                 });
 
                 this.socket.on('peer-connected', (data) => {
@@ -390,6 +397,11 @@
 
                 this.socket.on('receive-message', (data) => {
                     this.handleMessage(data);
+                });
+
+                this.socket.on('error', (error) => {
+                    console.error('Socket error:', error);
+                    this.setStatus('Error', false);
                 });
             }
 
@@ -548,5 +560,6 @@
             }
         });
     </script>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
 </body>
 </html>
